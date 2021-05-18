@@ -1,49 +1,29 @@
-import React, { Component } from 'react'
+import React from 'react'
+import LoginFirst from './LoginFirst';
 
-import Navbar from './navbar';
+import Navbar from './Navbar';
 import UserProfile from './UserProfile';
 
-export default class Profile extends Component {
-    constructor() {
-        super();
-        this.state = { msg: '' };
-    }
-    componentWillMount()
-    {
-        var msg = '';
-        console.log("inside postdata");
-        fetch('/secret',{
-            method:'GET',
-            headers:{
-                "Content-Type":"application/json"
-            }
-        }).then(res => res.json())
-        .then(json => {
-            if(json.status===400)
+
+export default function Profile(props) {
+
+
+    return (
+        <>
+            {console.log(props.match.params.username)}
+            <Navbar></Navbar>
             {
-                msg = <h4>Please Login first...</h4>;
-                
+                window.sessionStorage.getItem("status")==="online"&&props.match.params.username!==undefined&&
+                <UserProfile username={props.match.params.username} />
             }
-            else
             {
-                msg = <UserProfile data={json.data} />;
+                window.sessionStorage.getItem("status")==="online"&&props.match.params.username===undefined&&
+                <UserProfile username={JSON.parse(sessionStorage.getItem("data")).username} />
             }
-            this.setState({msg:msg});
-            
-        });
-        
-        
-    }
-    
-    
-    render() {
-        return (
-            <>
-                <div>
-                    <Navbar></Navbar>
-                    {this.state.msg}
-                </div>
-            </>
-        )
-    }
+            {
+                (window.sessionStorage.getItem("status")==="offline"||window.sessionStorage.getItem("status")===null)&&
+                <LoginFirst/>
+            }
+    </>
+    )
 }

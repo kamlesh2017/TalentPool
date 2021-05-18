@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
-import Navbar from './navbar'
+import LoginFirst from './LoginFirst';
+import Navbar from './Navbar'
 
 export default class SignOut extends Component {
     constructor() {
@@ -19,11 +20,13 @@ export default class SignOut extends Component {
         .then(json => {
             if(json.status===400)
             {
-                msg = <h4>Please Login first...</h4>;
+                msg = <LoginFirst/>;
                 this.setState({msg:msg});
             }
             else
             {
+                window.sessionStorage.setItem("status","offline");
+                window.sessionStorage.removeItem("data");
                 this.props.history.push('/login');
 
             }

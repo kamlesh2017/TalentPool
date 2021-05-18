@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import Navbar from './Navbar';
 
 export default class Welcome extends Component {
     constructor() {
@@ -37,7 +38,16 @@ export default class Welcome extends Component {
     render() {
         return (
             <div>
-                {this.state.msg}
+                <Navbar/>
+                <div className="row" style={{backgroundColor:"#20c997",width:"auto",marginLeft:"0px",marginRight:"0px",marginBottom:"0px",height:"92vh",overflow:"hidden"}}>
+            
+            <div className="col-md-12 d-flex flex-column justify-content-center align-items-center" style={{overflow:"hidden"}}>
+                <div className="text-white rotdiv justify-content-center align-items-center" style={{overflow:"hidden",border:"2px dotted white",padding:"5rem",maxWidth:"80%",maxHeight:"50vh"}}>
+                    
+                    <h4 style={{fontFamily: 'Lemonada',fontSize: '1.5rem'}}>{this.state.msg}</h4> 
+                </div>   
+            </div>
+        </div>
             </div>
         )
     }

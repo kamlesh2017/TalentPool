@@ -1,6 +1,6 @@
 import React,{useState} from 'react'
 import {useHistory} from 'react-router-dom'
-import Navbar from './navbar' 
+import Navbar from './Navbar' 
 import { toast } from 'react-toastify';
 
 import 'react-toastify/dist/ReactToastify.css';

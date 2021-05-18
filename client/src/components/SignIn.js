@@ -1,10 +1,12 @@
 import React,{useState} from 'react'
 import {useHistory} from 'react-router-dom'
-import Navbar from './navbar' 
+import Navbar from './Navbar' 
 import GoogleLogin from 'react-google-login'
 import { toast } from 'react-toastify';
 
 import 'react-toastify/dist/ReactToastify.css';
+
+
 toast.configure()
 export default function SignIn() {
     const history = useHistory();
@@ -19,9 +21,8 @@ export default function SignIn() {
         const fname = res.givenName;
         const lname = res.familyName;
         const email = res.email;
-        //console.log("password is",process.env.RANDOM_PASSWORD);
-        const password = "11";    
-        const cpassword = "11";
+        const password = process.env.REACT_APP_RANDOM_PASSWORD;    
+        const cpassword = process.env.REACT_APP_RANDOM_PASSWORD;
         const res1 = await fetch('/register',{
             method:'POST',
             headers:{
@@ -35,8 +36,6 @@ export default function SignIn() {
         console.log(data);
         if(!data)
         {
-            let err='Registration unsuccessful';
-            
             console.log('Registration unsuccessful');
         } 
         else{
@@ -65,8 +64,14 @@ export default function SignIn() {
             } 
             else{
                 toast.success("Login successful",{position:toast.POSITION.TOP_CENTER});
+                window.sessionStorage.setItem("status","online")
+                console.log(data1.data);
+                window.sessionStorage.setItem("data",JSON.stringify(data1.data));
+                console.log(JSON.parse(window.sessionStorage.getItem("data")));
                 console.log('Login successful');
-                history.push('/profile');
+                window.history.replaceState(null, null, "/");
+                history.push('/');
+                //history.push('/profile');
             }
 
             
@@ -103,8 +108,11 @@ export default function SignIn() {
         }
         else{
             toast.success('Login successful',{position:toast.POSITION.TOP_CENTER});
+            window.sessionStorage.setItem("status","online")
+            window.sessionStorage.setItem("data",JSON.stringify(data.data));
             console.log('Login successful');
-            history.push('/profile');
+            window.history.replaceState(null, null, "/");
+            history.push('/');
         }
     }
     
@@ -128,7 +136,7 @@ export default function SignIn() {
                     <button type="submit" className="btn btn-block btn-primary">Sign in</button>
                     <br/>
                     <GoogleLogin
-                    clientId="827588330883-phk83ulan2r8rnnneu8nsmvi38f9oa20.apps.googleusercontent.com"
+                    clientId={process.env.REACT_APP_CLIENT_ID}
                     buttonText="Login via Google"
                     onSuccess={(res)=>{
                         console.log(res);

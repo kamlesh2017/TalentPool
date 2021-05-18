@@ -6,6 +6,11 @@ const jwt=require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 
 const employeeSchema=new mongoose.Schema({
+  username:{
+    type:String,
+    required:true,
+    unique:true
+  },
   fname:{
     type:String,
     required:true
@@ -40,20 +45,64 @@ const employeeSchema=new mongoose.Schema({
     type:String,
     required:true
   },
-  tokens:[{
-    token:{
-      type:String,
-      required:true
-    }
-  }],
+  deviceCount:{
+    type:Number,
+    default:0
+  },
+  token:{
+    type:String,
+    default:''
+  },
   confirmationCode:{
     type:String,
     default:''
   },
   image:{
     type:String,
-    default:'https://res.cloudinary.com/talentpool-images/image/upload/v1619505419/newuser_yqnqy9.jpg'
-  }
+    default:'https://res.cloudinary.com/danx7nmf1/image/upload/v1620878257/newuser_sckdqw.jpg'
+  },
+  postCategories:[{
+    category:{
+      type:String,
+      required:true
+    },
+    count:{
+      type:Number,
+      required:true
+    }
+  }],
+  posts:[{
+    date:{
+      type:Date,
+      required:true
+    },
+    type:{
+      type:String,
+      required:true
+    },
+    caption:{
+      type:String,
+      required:true
+    },
+    url:{
+      type:String,
+      required:true
+    },
+    votes:[{
+      id:{
+        type:String,
+        required:true
+      },
+      vote:{
+        type:Number,
+        required:true
+      }
+    }],
+    category:{
+        type:String,
+        required:true
+    }
+  }]
 })
 
 
@@ -61,7 +110,8 @@ employeeSchema.methods.createAuthToken=async function(){
   try {
     const token=jwt.sign(this._id.toString(),process.env.SECRET_KEY);
     console.log("here",token);
-    this.tokens=this.tokens.concat({token:token});
+    this.token=token;
+    this.deviceCount = this.deviceCount + 1
     await this.save();
     return token;
   } catch (error) {
@@ -72,6 +122,28 @@ employeeSchema.methods.createAuthToken=async function(){
 }
 //middleware for password hashing
 employeeSchema.pre("save",async function(next){
+
+  if(this.isModified("username"))
+  {
+    const data = await Register.find({},{username:1,_id:0});
+    let usernames = [];
+    for(var i=0;i<data.length;i++)
+    {
+      usernames=usernames.concat(data[i].username);
+    }
+    do{
+    const characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let username = this.username+"_";
+    for (let i = 0; i < 5; i++) {
+      username += characters[Math.floor(Math.random() * characters.length )];
+    }
+    this.username = username;
+  }
+  while(usernames.includes(this.username));
+     
+  }
+  console.log("username created",this.username);
+
   if(this.isModified("password"))
   {
     // console.log(this.password);
@@ -107,7 +179,7 @@ employeeSchema.pre("save",async function(next){
             <h2>Hello ${this.fname}</h2>
             <p>Thank you for registering. Please confirm your email by clicking on the following link</p>
             <a href=http://localhost:3000/confirm/${confirmationCode}> Click here</a>
-            </div>`,
+            `,
       }).catch(err => console.log(err));
     }
 

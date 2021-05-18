@@ -14,11 +14,19 @@ const authentication=async (req,res,next)=>{
     const data=await Register.findOne({_id:isValid});
     //console.log(data);
 
+    if(data.token!==token)
+    {
+      console.log("ye dikkat");
+      res.status(200).json({status:400,error:"please login first.."});
+    }
+
     req.token=token;
     req.data=data;
 
+
     next();
   } catch (error) {
+    console.log(error);
     res.status(200).json({status:400,error:"please login first.."});
   }
 }
