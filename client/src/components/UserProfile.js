@@ -3,13 +3,19 @@ import {useState,useEffect} from 'react';
 import React from 'react';
 import Post from './Post';
 import { toast } from 'react-toastify';
-
+import InfiniteScroll from 'react-infinite-scroll-component';
 import 'react-toastify/dist/ReactToastify.css';
 toast.configure()
 
 const UserProfile=(props)=>{
   const ref = React.useRef();
   const [previewSource,setpreviewSource] = useState()
+  const [page, setpage] = useState(1)
+
+
+  const fetchMore = async() => {
+      setpage(page+1)
+  }
 
   const [data, setdata] = useState()
   const [posts, setposts] = useState([])
@@ -22,7 +28,9 @@ const UserProfile=(props)=>{
                 "Content-Type":"application/json"
             },
             body: JSON.stringify({
-                username:props.username
+                username:props.username,
+                page:page,
+                limit:5
             })
         })
         .then(res=>res.json())
@@ -32,12 +40,13 @@ const UserProfile=(props)=>{
                 setdata(data1.data);
                 console.log(data1);
                 setpreviewSource(data1.data.image);
+                data1.posts=posts.concat(data1.posts);
                 setposts(data1.posts);
             }
         })
         
         
-    }, [])
+    }, [page])
 
 
     const uploadImage = async (base64EncodedImage) => {
@@ -138,6 +147,11 @@ return(
       <div className="row mx-auto pt-md-4">
         {console.log("data",data)}
         <div className="col-lg-5 col-md-7 col-12 mx-auto">
+        <InfiniteScroll
+                    dataLength={posts.length}
+                    next={fetchMore}
+                    hasMore={true}
+                >
         {
           posts.map((item,idx)=>{
             return (
@@ -145,6 +159,7 @@ return(
             );
           })
         }
+        </InfiniteScroll>
         </div>
       </div>
     </div>

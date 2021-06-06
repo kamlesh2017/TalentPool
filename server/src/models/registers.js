@@ -60,49 +60,7 @@ const employeeSchema=new mongoose.Schema({
   image:{
     type:String,
     default:'https://res.cloudinary.com/danx7nmf1/image/upload/v1620878257/newuser_sckdqw.jpg'
-  },
-  postCategories:[{
-    category:{
-      type:String,
-      required:true
-    },
-    count:{
-      type:Number,
-      required:true
-    }
-  }],
-  posts:[{
-    date:{
-      type:Date,
-      required:true
-    },
-    type:{
-      type:String,
-      required:true
-    },
-    caption:{
-      type:String,
-      required:true
-    },
-    url:{
-      type:String,
-      required:true
-    },
-    votes:[{
-      id:{
-        type:String,
-        required:true
-      },
-      vote:{
-        type:Number,
-        required:true
-      }
-    }],
-    category:{
-        type:String,
-        required:true
-    }
-  }]
+  }
 })
 
 

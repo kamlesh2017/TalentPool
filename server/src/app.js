@@ -12,6 +12,7 @@ const jwt=require("jsonwebtoken");
 
 require("./db/connection");
 const Register=require("./models/registers");
+const Posts=require("./models/posts");
 const Categories=require("./models/categories")
 
 app.use(cookieParser());
@@ -49,22 +50,14 @@ app.post("/handleVote",async(req,res)=>{
     const postId = req.body.postId;
     const vote = req.body.vote;
     const postUserId = req.body.postUserId;
-    const data = await Register.findOne({_id:postUserId});
-    const posts = data.posts;
-    var idx=-1;
-    for(var i=0;i<posts.length;i++)
-    {
-      if(posts[i]._id==postId)
-      {
-        idx=i;
-        break;
-      }
-    }
-    var n = posts[idx].votes.length;
+    
+    const posts = await Posts.findOne({_id:postId});
+    
+    var n = posts.votes.length;
     var idx2=-1;
     for(var i=0;i<n;i++)
     {
-      if(posts[idx].votes[i].id==userId)
+      if(posts.votes[i].id==userId)
       {
         idx2=i;
         break;
@@ -72,15 +65,18 @@ app.post("/handleVote",async(req,res)=>{
     }
     if(idx2==-1)
     {
-      posts[idx].votes = posts[idx].votes.concat({id:userId,vote:vote});
+      posts.votes = posts.votes.concat({id:userId,vote:vote});
     }
     else
     {
-      posts[idx].votes[idx2].vote = vote;
+      posts.votes[idx2].vote = vote;
     }
-    data.posts = posts;
-    await data.save();
-    res.status(201).json({status:201,data:posts[idx]});
+    console.log(posts.score);
+    posts.score += vote
+    console.log(posts.score);
+    
+    await posts.save();
+    res.status(201).json({status:201,data:posts});
   }
   catch(err)
   {
@@ -93,9 +89,9 @@ app.post("/getProfile",async(req,res)=>{
   try{
     const username = req.body.username;
     const data = await Register.findOne({username:username});
-    console.log(data.posts);
+    const posts = await Posts.find({user:data.email}).sort({'date': -1}).skip((req.body.page-1)*req.body.limit).limit(req.body.limit);;
 
-    var posts = [];
+    var posts1 = [];
     
     let flag=true;
     let name = data.fname+" "+data.lname;
@@ -104,10 +100,10 @@ app.post("/getProfile",async(req,res)=>{
     
     if(flag)
     {
-      for(let j=data.posts.length-1;j>=0;j--)
+      for(let j=0;j<posts.length;j++)
       {
         console.log("inside loop");
-        let obj = data.posts[j];
+        let obj = posts[j];
         let obj1={
           _id: obj._id,
           username:username,
@@ -129,7 +125,7 @@ app.post("/getProfile",async(req,res)=>{
         }
         
         console.log(obj1);
-        posts = posts.concat(obj1);
+        posts1 = posts1.concat(obj1);
         
       }
     }
@@ -137,7 +133,7 @@ app.post("/getProfile",async(req,res)=>{
     console.log(data);
 
 
-    res.status(201).json({status:201,data:data,posts:posts});
+    res.status(201).json({status:201,data:data,posts:posts1});
   }
   catch(err)
   {
@@ -150,55 +146,42 @@ app.post("/getProfile",async(req,res)=>{
 app.post("/viewTalent",async(req,res)=>{
   try{
     const category = req.body.category;
-    const data = await Register.find();
-    var posts = [];
-    for(let i=0;i<data.length;i++)
+    var posts = await Posts.find({category:category})
+    .sort({'score': -1,'date':1})
+    .skip((req.body.page-1)*req.body.limit).limit(req.body.limit);
+    console.log(posts.length);
+    var posts1 = [];
+    console.log("here",(req.body.page-1)*req.body.limit);
+    
+    for(let i=0;i<posts.length;i++)
     {
-      let flag=false;
-      let name = data[i].fname+" "+data[i].lname;
-      let photo = data[i].image;
-      let postUserId = data[i]._id;
-      let username = data[i].username;
-      let len1=data[i].postCategories.length;
-      for(let j=0;j<len1;j++)
-      {
-        if(data[i].postCategories[j].category===category)
-        {
-          flag=true;
-          break;
-        }
+      const data = await Register.findOne({email:posts[i].user});
+      console.log(i,data);
+      let name = data.fname+" "+data.lname;
+      let photo = data.image;
+      let postUserId = data._id;
+      let username = data.username;
+
+      let obj = posts[i];
+      let obj1={
+        _id: obj._id,
+        username:username,
+        date: obj.date,
+        caption: obj.caption,
+        type: obj.type,
+        url: obj.url,
+        category: obj.category,
+        votes: obj.votes,
+        name:name,
+        photo:photo,
+        postUserId:postUserId
       }
-      if(flag)
-      {
-        for(let j=data[i].posts.length-1; j>=0;j--)
-        {
-          if(data[i].posts[j].category===category)
-          {
-            let obj = data[i].posts[j];
-            let obj1={
-              _id: obj._id,
-              username:username,
-              date: obj.date,
-              caption: obj.caption,
-              type: obj.type,
-              url: obj.url,
-              category: obj.category,
-              votes: obj.votes,
-              name:name,
-              photo:photo,
-              postUserId:postUserId
-            }
-            
-            console.log(obj1);
-            posts = posts.concat(obj1);
-          }
-        }
-      }
+      
+      //console.log(obj1);
+      posts1 = posts1.concat(obj1);
     }
-    posts.sort((a, b) => {
-      return b.votes.length - a.votes.length;
-    });
-    res.status(201).json({status:201,posts:posts});
+    
+    res.status(201).json({status:201,posts:posts1});
     //console.log(posts);
   }catch(err)
   {
@@ -270,28 +253,15 @@ app.post("/uploadTalent",async(req,res)=>{
       resource_type: resource_type
     })
     console.log(uploadedResponse);
-    const data = await Register.findOne({email:req.body.user});
+    //const data = await Register.findOne({email:req.body.user});
     //console.log(data);
 
-    data.posts = data.posts.concat({date:new Date(),caption:req.body.caption,type:req.body.type,url:uploadedResponse.url,category:req.body.category});
+    const post = new Posts({date:new Date(),user:req.body.user,caption:req.body.caption,type:req.body.type,url:uploadedResponse.url,category:req.body.category});
+
+    // = data.posts.concat({date:new Date(),caption:req.body.caption,type:req.body.type,url:uploadedResponse.url,category:req.body.category});
     //console.log(data);
-    let len = data.postCategories.length;
-    let flag=false;
-    console.log(len);
-    for(let i=0;i<len;i++)
-    {
-      if(data.postCategories[i].category===req.body.category)
-      {
-        data.postCategories[i].count++;
-        flag=true;
-        break;
-      }
-    }
-    if(!flag)
-    {
-      data.postCategories = data.postCategories.concat({category:req.body.category,count:1});
-    }
-    const resp = await data.save();
+    
+    const resp = await post.save();
     res.status(201).json({status:201});
   }catch(err)
   {
@@ -422,11 +392,11 @@ app.post("/login",async (req,res)=>{
     }
     else
     {
-      res.json({status:400,error:"Invalid email or password",data:employee});
+      res.json({status:400,error:"Invalid email or password",data:{}});
     }
   }catch(err)
   {
-    res.json({status:400,error:"Invalid email or password",data:employee})
+    res.json({status:400,error:"Invalid email or password",data:{}})
   }
 })
 

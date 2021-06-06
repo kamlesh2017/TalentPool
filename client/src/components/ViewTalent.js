@@ -1,6 +1,6 @@
 import React,{useEffect,useState} from 'react'
 import { toast } from 'react-toastify';
-
+import InfiniteScroll from 'react-infinite-scroll-component';
 import 'react-toastify/dist/ReactToastify.css';
 import LoginFirst from './LoginFirst';
 import Navbar from './Navbar';
@@ -13,6 +13,12 @@ export default function ViewTalent(props) {
     const [posts, setposts] = useState([])
     const [arr, setarr] = useState([])
     const [loaded, setloaded] = useState(false)
+    const [page, setpage] = useState(1)
+
+
+    const fetchMore = async() => {
+        setpage(page+1)
+    }
 
 
     useEffect(() => {
@@ -35,7 +41,9 @@ export default function ViewTalent(props) {
                 "Content-Type":"application/json"
             },
             body: JSON.stringify({
-                category:category
+                category:category,
+                page:page,
+                limit:5
             })
         })
         .then(res=>res.json())
@@ -79,11 +87,16 @@ export default function ViewTalent(props) {
                     data.posts[i].currentDislike=currentDislike;
                     console.log(data.posts[i]);
                 }
+                data.posts=posts.concat(data.posts);
+
+                console.log("here ",data.posts.length);
+                console.log(data.posts);
+                console.log("finish");
                 setposts(data.posts);
                 setloaded(true);
             }
         })
-    }, [])
+    }, [page])
 
 
     return (
@@ -94,13 +107,19 @@ export default function ViewTalent(props) {
             window.sessionStorage.getItem("status")==="online"&&arr.includes(props.match.params.category)&&
             <div className="row mx-auto" style={{backgroundColor:"rgb(230, 230, 230)"}}>
                 <div className="col-lg-5 col-md-7 col-12 mx-auto">
+                <InfiniteScroll
+                    dataLength={posts.length}
+                    next={fetchMore}
+                    hasMore={true}
+                >
                 {
-                posts.map((item,idx)=>{
-                    return (
-                        <Post key={idx} item={item}/>
-                    );
-                })
+                    posts.map((item,idx)=>{
+                        return (
+                            <Post key={idx} item={item}/>
+                        );
+                    })
                 }
+                </InfiniteScroll>
                 </div>
             </div>
         }  
